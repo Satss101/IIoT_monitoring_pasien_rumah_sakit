@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BNSP IoT — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ── RESET & ROOT ── */
+:root {
+  --bg:      #060a12;
+  --panel:   #0b1120;
+  --panel2:  #0f1929;
+  --border:  #162035;
+  --border2: #1e2e4a;
+  --accent:  #00d4ff;
+  --accent2: #00ff9d;
+  --warn:    #ffb800;
+  --danger:  #ff4d6d;
+  --text:    #dde6f0;
+  --muted:   #4a6080;
+  --card-glow: 0 4px 30px rgba(0,0,0,0.4);
+}
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius:3px; }
+
+/* ── BG GRID ── */
+.bg-grid {
+  position: fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ── LAYOUT ── */
+.app-wrap {
+  position: relative; z-index:1;
+  display: flex; min-height:100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 230px; min-height:100vh;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction:column;
+  position: sticky; top:0; height:100vh;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 1.5rem 1.2rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.logo-badge {
+  display: flex; align-items:center; gap:0.6rem;
+}
+.logo-icon-sm {
+  width:38px; height:38px;
+  background: linear-gradient(135deg, rgba(0,212,255,0.2), rgba(0,255,157,0.1));
+  border:1px solid rgba(0,212,255,0.3);
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.2rem;
+}
+.logo-text { font-size:1rem; font-weight:800; }
+.logo-text span {
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.logo-version {
+  font-family:'Space Mono',monospace; font-size:0.55rem;
+  color:var(--muted); letter-spacing:0.15em; text-transform:uppercase;
+  margin-top:0.15rem;
+}
+
+.sidebar-nav { padding:1rem 0; flex:1; }
+.nav-section-title {
+  font-family:'Space Mono',monospace; font-size:0.58rem;
+  color:var(--muted); letter-spacing:0.2em; text-transform:uppercase;
+  padding:0.8rem 1.2rem 0.4rem;
+}
+.nav-item {
+  display:flex; align-items:center; gap:0.7rem;
+  padding:0.7rem 1.2rem;
+  cursor:pointer;
+  transition:background 0.15s, color 0.15s;
+  font-size:0.87rem; font-weight:600;
+  color:var(--muted);
+  border-radius:0; position:relative;
+}
+.nav-item:hover { background:rgba(0,212,255,0.05); color:var(--text); }
+.nav-item.active {
+  color:var(--accent);
+  background:rgba(0,212,255,0.07);
+}
+.nav-item.active::before {
+  content:'';
+  position:absolute; left:0; top:15%; bottom:15%;
+  width:3px; background:var(--accent);
+  border-radius:0 3px 3px 0;
+}
+.nav-icon { font-size:1rem; width:20px; text-align:center; }
+
+.sidebar-footer {
+  padding:1rem 1.2rem;
+  border-top:1px solid var(--border);
+}
+.user-badge {
+  display:flex; align-items:center; gap:0.7rem;
+}
+.avatar {
+  width:32px; height:32px;
+  background:linear-gradient(135deg, var(--accent), #0099cc);
+  border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.85rem; font-weight:700; color:#000;
+}
+.user-info { flex:1; }
+.user-name { font-size:0.82rem; font-weight:700; }
+.user-role { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--muted); }
+.logout-btn {
+  background:none; border:none; color:var(--muted);
+  cursor:pointer; font-size:1rem; padding:0.2rem;
+  transition:color 0.15s;
+}
+.logout-btn:hover { color:var(--danger); }
+
+/* ── MAIN CONTENT ── */
+.main {
+  flex:1; display:flex; flex-direction:column;
+  overflow:hidden;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0.8rem 1.5rem;
+  display: flex; align-items:center; justify-content:space-between;
+  gap: 1rem;
+}
+.page-title { font-size:1.1rem; font-weight:800; }
+.page-title span { color:var(--muted); font-weight:400; font-size:0.9rem; margin-left:0.5rem; }
+
+.topbar-right { display:flex; align-items:center; gap:1rem; }
+
+.status-pill {
+  display:flex; align-items:center; gap:0.5rem;
+  padding:0.35rem 0.8rem;
+  border-radius:20px;
+  font-family:'Space Mono',monospace;
+  font-size:0.68rem; letter-spacing:0.08em;
+  font-weight:700; text-transform:uppercase;
+}
+.status-pill.online {
+  background:rgba(0,255,157,0.1);
+  border:1px solid rgba(0,255,157,0.3);
+  color:var(--accent2);
+}
+.status-pill.offline {
+  background:rgba(255,77,109,0.1);
+  border:1px solid rgba(255,77,109,0.3);
+  color:var(--danger);
+}
+.dot-blink {
+  width:7px; height:7px; border-radius:50%;
+  animation: blink 1.4s ease-in-out infinite;
+}
+.online .dot-blink { background:var(--accent2); }
+.offline .dot-blink { background:var(--danger); }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+
+.last-update {
+  font-family:'Space Mono',monospace;
+  font-size:0.65rem; color:var(--muted);
+}
+
+/* ── CONTENT ── */
+.content { flex:1; overflow-y:auto; padding:1.5rem; }
+
+/* ── SECTIONS ── */
+.section { display:none; animation:fadeIn 0.3s ease; }
+.section.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+
+/* ── SECTION HEADER ── */
+.section-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:1.2rem;
+}
+.section-hdr h2 {
+  font-size:1.05rem; font-weight:800; letter-spacing:0.02em;
+}
+.section-hdr h2 small {
+  font-family:'Space Mono',monospace; font-size:0.62rem;
+  color:var(--muted); font-weight:400; letter-spacing:0.12em;
+  text-transform:uppercase; margin-left:0.6rem;
+}
+
+/* ── CARDS ROW ── */
+.cards-row {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap:1rem;
+  margin-bottom:1.5rem;
+}
+
+.sensor-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: default;
+}
+.sensor-card::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  border-radius:14px 14px 0 0;
+  opacity: 0.8;
+}
+.sensor-card.temp::before  { background:linear-gradient(90deg,#ff6b6b,#ffa07a); }
+.sensor-card.hum::before   { background:linear-gradient(90deg,#4facfe,#00f2fe); }
+.sensor-card.spo2::before  { background:linear-gradient(90deg,#ff4d6d,#f72585); }
+.sensor-card.hr::before    { background:linear-gradient(90deg,#f72585,#b5179e); }
+.sensor-card.gsr::before   { background:linear-gradient(90deg,#56cfb0,#00ff9d); }
+
+.sensor-card:hover {
+  border-color: var(--border2);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+.sensor-card.alert-high {
+  border-color: rgba(255,77,109,0.5) !important;
+  box-shadow: 0 0 20px rgba(255,77,109,0.15) !important;
+  animation: alertPulse 2s ease-in-out infinite;
+}
+@keyframes alertPulse {
+  0%,100%{box-shadow:0 0 20px rgba(255,77,109,0.15);}
+  50%{box-shadow:0 0 35px rgba(255,77,109,0.35);}
+}
+
+.card-icon-wrap {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:0.8rem;
+}
+.card-icon {
+  width:38px; height:38px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem;
+}
+.temp  .card-icon { background:rgba(255,107,107,0.15); }
+.hum   .card-icon { background:rgba(79,172,254,0.15); }
+.spo2  .card-icon { background:rgba(247,37,133,0.15); }
+.hr    .card-icon { background:rgba(183,23,158,0.15); }
+.gsr   .card-icon { background:rgba(86,207,176,0.15); }
+
+.card-badge {
+  font-family:'Space Mono',monospace; font-size:0.6rem;
+  padding:0.2rem 0.5rem; border-radius:20px;
+  text-transform:uppercase; letter-spacing:0.08em;
+  font-weight:700;
+}
+.card-badge.normal { background:rgba(0,255,157,0.1); color:var(--accent2); border:1px solid rgba(0,255,157,0.2); }
+.card-badge.warning { background:rgba(255,184,0,0.1); color:var(--warn); border:1px solid rgba(255,184,0,0.2); }
+.card-badge.danger  { background:rgba(255,77,109,0.1); color:var(--danger); border:1px solid rgba(255,77,109,0.2); }
+
+.card-label {
+  font-family:'Space Mono',monospace; font-size:0.62rem;
+  color:var(--muted); letter-spacing:0.12em; text-transform:uppercase;
+  margin-bottom:0.3rem;
+}
+.card-value {
+  font-size:2rem; font-weight:800; line-height:1;
+  font-variant-numeric: tabular-nums;
+}
+.card-unit {
+  font-family:'Space Mono',monospace; font-size:0.75rem;
+  color:var(--muted); margin-left:0.2rem;
+}
+.card-mini {
+  font-family:'Space Mono',monospace; font-size:0.6rem;
+  color:var(--muted); margin-top:0.4rem;
+}
+
+/* ── CHARTS GRID ── */
+.charts-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap:1rem;
+  margin-bottom:1.5rem;
+}
+.chart-panel {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:1.2rem;
+  display:flex;
+  flex-direction:column;
+}
+.chart-title {
+  font-size:0.82rem; font-weight:700;
+  margin-bottom:1rem;
+  display:flex; align-items:center; gap:0.5rem;
+}
+.chart-dot {
+  width:8px; height:8px; border-radius:50%;
+}
+.chart-canvas-wrap { position:relative; height:200px; min-width:0; }
+
+/* ── TABLE ── */
+.table-panel {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+}
+.table-hdr {
+  padding:1rem 1.2rem;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.table-hdr h3 { font-size:0.88rem; font-weight:700; }
+.table-scroll { overflow-x:auto; }
+table {
+  width:100%; border-collapse:collapse;
+  font-family:'Space Mono',monospace; font-size:0.75rem;
+}
+thead th {
+  background:rgba(255,255,255,0.02);
+  padding:0.7rem 1rem;
+  text-align:left;
+  font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--muted); font-weight:700;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td {
+  padding:0.65rem 1rem;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  color:var(--text);
+  white-space:nowrap;
+}
+tbody tr:hover td { background:rgba(0,212,255,0.03); }
+tbody tr:last-child td { border-bottom:none; }
+.td-spo2-alert { color:var(--danger); font-weight:700; }
+
+/* ── SETTINGS SECTION ── */
+.settings-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:1rem;
+}
+.settings-card {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:1.5rem;
+}
+.settings-card h3 { font-size:0.88rem; font-weight:700; margin-bottom:1.2rem; }
+
+.form-group { margin-bottom:1rem; }
+.form-label {
+  font-family:'Space Mono',monospace; font-size:0.62rem;
+  letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--muted); display:block; margin-bottom:0.5rem;
+}
+.form-input {
+  width:100%;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  padding:0.7rem 1rem;
+  color:var(--text);
+  font-family:'Space Mono',monospace;
+  font-size:0.85rem;
+  outline:none;
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus {
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(0,212,255,0.08);
+}
+
+.current-threshold {
+  background:rgba(0,212,255,0.05);
+  border:1px solid rgba(0,212,255,0.15);
+  border-radius:10px;
+  padding:0.8rem 1rem;
+  margin-bottom:1rem;
+  font-family:'Space Mono',monospace; font-size:0.78rem;
+}
+.current-threshold strong { color:var(--accent); font-size:1.2rem; }
+
+.btn {
+  padding:0.7rem 1.2rem;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  font-family:'Syne',sans-serif;
+  font-size:0.82rem; font-weight:700;
+  letter-spacing:0.05em;
+  transition:all 0.15s;
+}
+.btn-primary {
+  background:linear-gradient(135deg,var(--accent),#0099cc);
+  color:#000;
+}
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,212,255,0.3); }
+
+.alert-banner {
+  display:none;
+  background:rgba(255,77,109,0.1);
+  border:1px solid rgba(255,77,109,0.3);
+  border-radius:10px;
+  padding:0.8rem 1.2rem;
+  margin-bottom:1.2rem;
+  color:var(--danger);
+  font-size:0.85rem; font-weight:700;
+  display:flex; align-items:center; gap:0.6rem;
+  animation:shake 0.4s ease;
+}
+.alert-banner.hidden { display:none !important; }
+@keyframes shake {
+  0%,100%{transform:translateX(0);}
+  25%{transform:translateX(-5px);}
+  75%{transform:translateX(5px);}
+}
+
+/* toast */
+.toast {
+  position:fixed; bottom:1.5rem; right:1.5rem;
+  background:rgba(0,255,157,0.12);
+  border:1px solid rgba(0,255,157,0.3);
+  border-radius:10px;
+  padding:0.8rem 1.2rem;
+  color:var(--accent2);
+  font-family:'Space Mono',monospace; font-size:0.75rem;
+  transform:translateY(80px); opacity:0;
+  transition:all 0.3s ease;
+  z-index:9999;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+
+/* responsive */
+@media(max-width:768px) {
+  .sidebar { width:60px; }
+  .sidebar-logo .logo-text,
+  .logo-version, .nav-item span, .user-info,
+  .nav-section-title { display:none; }
+  .nav-item { justify-content:center; }
+  .sidebar-footer .user-badge { justify-content:center; }
+  .avatar { margin:0 auto; }
+  .logout-btn { display:none; }
+}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div id="toast" class="toast"></div>
+
+<div class="app-wrap">
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge">
+        <div class="logo-icon-sm">🩺</div>
+        <div>
+          <div class="logo-text"><span>BNSP</span> IoT</div>
+          <div class="logo-version">v1.0.0</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Monitor</div>
+      <div class="nav-item active" onclick="showSection('dashboard',this)">
+        <span class="nav-icon">📊</span><span>Dashboard</span>
+      </div>
+      <div class="nav-item" onclick="showSection('grafik',this)">
+        <span class="nav-icon">📈</span><span>Grafik Real-time</span>
+      </div>
+      <div class="nav-item" onclick="showSection('riwayat',this)">
+        <span class="nav-icon">📋</span><span>Riwayat Data</span>
+      </div>
+      <div class="nav-section-title">Konfigurasi</div>
+      <div class="nav-item" onclick="showSection('pengaturan',this)">
+        <span class="nav-icon">⚙️</span><span>Pengaturan</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="avatar">A</div>
+        <div class="user-info">
+          <div class="user-name">Admin</div>
+          <div class="user-role">Superuser</div>
+        </div>
+        <button class="logout-btn" onclick="location.href='/logout'" title="Logout">⏏</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-title" id="page-title">Dashboard <span>Real-time Monitoring</span></div>
+      <div class="topbar-right">
+        <div class="status-pill online" id="status-pill">
+          <div class="dot-blink"></div>
+          <span id="status-text">Online</span>
+        </div>
+        <div class="last-update" id="last-update">--:--:--</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ALERT BANNER -->
+      <div class="alert-banner hidden" id="alert-banner">
+        ⚠️ <span id="alert-text">SpO2 melebihi ambang batas!</span>
+      </div>
+
+      <!-- ── SECTION: DASHBOARD ── -->
+      <div class="section active" id="sec-dashboard">
+        <div class="section-hdr">
+          <h2>Sensor Overview <small>Live Data</small></h2>
+        </div>
+
+        <div class="cards-row">
+          <div class="sensor-card temp" id="card-temp">
+            <div class="card-icon-wrap">
+              <div class="card-icon">🌡️</div>
+              <span class="card-badge normal" id="badge-temp">Normal</span>
+            </div>
+            <div class="card-label">Suhu</div>
+            <div class="card-value" id="val-temp">--<span class="card-unit">°C</span></div>
+            <div class="card-mini" id="mini-temp">— °C</div>
+          </div>
+
+          <div class="sensor-card hum" id="card-hum">
+            <div class="card-icon-wrap">
+              <div class="card-icon">💧</div>
+              <span class="card-badge normal" id="badge-hum">Normal</span>
+            </div>
+            <div class="card-label">Kelembapan</div>
+            <div class="card-value" id="val-hum">--<span class="card-unit">%</span></div>
+            <div class="card-mini" id="mini-hum">— %</div>
+          </div>
+
+          <div class="sensor-card spo2" id="card-spo2">
+            <div class="card-icon-wrap">
+              <div class="card-icon">🩸</div>
+              <span class="card-badge normal" id="badge-spo2">Normal</span>
+            </div>
+            <div class="card-label">SpO2</div>
+            <div class="card-value" id="val-spo2">--<span class="card-unit">%</span></div>
+            <div class="card-mini" id="mini-spo2">Batas: — %</div>
+          </div>
+
+          <div class="sensor-card hr" id="card-hr">
+            <div class="card-icon-wrap">
+              <div class="card-icon">❤️</div>
+              <span class="card-badge normal" id="badge-hr">Normal</span>
+            </div>
+            <div class="card-label">Detak Jantung</div>
+            <div class="card-value" id="val-hr">--<span class="card-unit">bpm</span></div>
+            <div class="card-mini" id="mini-hr">— bpm</div>
+          </div>
+
+          <div class="sensor-card gsr" id="card-gsr">
+            <div class="card-icon-wrap">
+              <div class="card-icon">💦</div>
+              <span class="card-badge normal" id="badge-gsr">Normal</span>
+            </div>
+            <div class="card-label">GSR (Keringat)</div>
+            <div class="card-value" id="val-gsr">--</div>
+            <div class="card-mini" id="mini-gsr">— units</div>
+          </div>
+        </div>
+
+        <!-- Mini Charts Row -->
+        <div class="charts-grid">
+          <div class="chart-panel">
+            <div class="chart-title">
+              <div class="chart-dot" style="background:#ff6b6b;"></div>
+              Suhu & Kelembapan (15 menit)
+            </div>
+            <div class="chart-canvas-wrap"><canvas id="chart-temp-hum"></canvas></div>
+          </div>
+          <div class="chart-panel">
+            <div class="chart-title">
+              <div class="chart-dot" style="background:#f72585;"></div>
+              SpO2 & Detak Jantung (15 menit)
+            </div>
+            <div class="chart-canvas-wrap"><canvas id="chart-spo2-hr"></canvas></div>
+          </div>
+          <div class="chart-panel">
+            <div class="chart-title">
+              <div class="chart-dot" style="background:#56cfb0;"></div>
+              GSR / Galvanic Skin Response (15 menit)
+            </div>
+            <div class="chart-canvas-wrap"><canvas id="chart-gsr"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION: GRAFIK ── -->
+      <div class="section" id="sec-grafik">
+        <div class="section-hdr">
+          <h2>Grafik Real-time <small>100 Data Terakhir</small></h2>
+        </div>
+        <div class="charts-grid" style="grid-template-columns:1fr;">
+          <div class="chart-panel">
+            <div class="chart-title"><div class="chart-dot" style="background:#ff6b6b;"></div>Suhu (°C)</div>
+            <div class="chart-canvas-wrap" style="height:200px;"><canvas id="chart2-temp"></canvas></div>
+          </div>
+          <div class="chart-panel">
+            <div class="chart-title"><div class="chart-dot" style="background:#4facfe;"></div>Kelembapan (%)</div>
+            <div class="chart-canvas-wrap" style="height:200px;"><canvas id="chart2-hum"></canvas></div>
+          </div>
+          <div class="chart-panel">
+            <div class="chart-title"><div class="chart-dot" style="background:#f72585;"></div>SpO2 (%) — Garis merah = ambang batas</div>
+            <div class="chart-canvas-wrap" style="height:200px;"><canvas id="chart2-spo2"></canvas></div>
+          </div>
+          <div class="chart-panel">
+            <div class="chart-title"><div class="chart-dot" style="background:#b5179e;"></div>Detak Jantung (bpm)</div>
+            <div class="chart-canvas-wrap" style="height:200px;"><canvas id="chart2-hr"></canvas></div>
+          </div>
+          <div class="chart-panel">
+            <div class="chart-title"><div class="chart-dot" style="background:#56cfb0;"></div>GSR</div>
+            <div class="chart-canvas-wrap" style="height:200px;"><canvas id="chart2-gsr"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION: RIWAYAT ── -->
+      <div class="section" id="sec-riwayat">
+        <div class="section-hdr">
+          <h2>Riwayat Data <small>50 Data Terakhir</small></h2>
+        </div>
+        <div class="table-panel">
+          <div class="table-hdr">
+            <h3>📋 Log Sensor</h3>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Timestamp</th>
+                  <th>Suhu (°C)</th>
+                  <th>Kelembapan (%)</th>
+                  <th>SpO2 (%)</th>
+                  <th>Detak Jantung (bpm)</th>
+                  <th>GSR</th>
+                  <th>Status SpO2</th>
+                </tr>
+              </thead>
+              <tbody id="table-body">
+                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION: PENGATURAN ── -->
+      <div class="section" id="sec-pengaturan">
+        <div class="section-hdr">
+          <h2>Pengaturan <small>Konfigurasi Sistem</small></h2>
+        </div>
+        <div class="settings-grid">
+          <div class="settings-card">
+            <h3>⚙️ Ambang Batas SpO2</h3>
+            <div class="current-threshold">
+              Batas saat ini: <strong id="current-threshold-display">--</strong>%
+              <br>
+              <span style="font-size:0.65rem;color:var(--muted);">Peringatan dikirim jika SpO2 melebihi nilai ini</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nilai Ambang Batas Baru (%)</label>
+              <input type="number" class="form-input" id="input-threshold" min="0" max="100" step="0.1" placeholder="Contoh: 95.0">
+            </div>
+            <button class="btn btn-primary" onclick="saveThreshold()">💾 Simpan Ambang Batas</button>
+          </div>
+
+          <div class="settings-card">
+            <h3>📡 Info Koneksi</h3>
+            <div style="font-family:'Space Mono',monospace;font-size:0.75rem;line-height:2;">
+              <div style="color:var(--muted);">Modbus Host</div>
+              <div>192.168.254.50 : 502</div>
+              <div style="color:var(--muted);margin-top:0.5rem;">Unit ID / FC</div>
+              <div>Unit 1 / FC4 (Read Input Register)</div>
+              <div style="color:var(--muted);margin-top:0.5rem;">Register</div>
+              <div>Address 1, Quantity 5</div>
+              <div style="color:var(--muted);margin-top:0.5rem;">Interval Baca</div>
+              <div>3 detik</div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <h3>🤖 Info Telegram Bot</h3>
+            <div style="font-family:'Space Mono',monospace;font-size:0.75rem;line-height:2;color:var(--muted);">
+              <div style="color:var(--text);">Perintah Tersedia:</div>
+              <div><span style="color:var(--accent);">/start</span> — Tampilkan panduan</div>
+              <div><span style="color:var(--accent);">/ceksituasi</span> — Baca sensor terkini</div>
+              <div><span style="color:var(--accent);">/setbatas</span> &lt;nilai&gt; — Ubah threshold SpO2</div>
+              <br>
+              <div>Peringatan otomatis dikirim saat</div>
+              <div>SpO2 melebihi ambang batas.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end .content -->
+  </div><!-- end .main -->
+</div><!-- end .app-wrap -->
+
+<script>
+// ── STATE ──
+let chartTempHum = null, chartSpo2Hr = null, chartGsr = null;
+let chart2Temp=null, chart2Hum=null, chart2Spo2=null, chart2Hr=null, chart2Gsr=null;
+let threshold = 95;
+const MAX_LIVE = 20;
+const liveLabels=[], liveTemp=[], liveHum=[], liveSpo2=[], liveHr=[], liveGsr=[];
+
+// ── CHART DEFAULTS ──
+Chart.defaults.color = '#4a6080';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = "'Space Mono', monospace";
+Chart.defaults.font.size = 10;
+
+function mkChart(id, datasets, yMin, yMax) {
+  const ctx = document.getElementById(id).getContext('2d');
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels: [], datasets },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      animation:{ duration:300 },
+      plugins:{ 
+        legend:{ display: datasets.length > 1, labels:{color:'#7a90ab',boxWidth:10,font:{size:10}} },
+        filler:{propagate:true}
+      },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{maxRotation:0,maxTicksLimit:6,font:{size:11}} },
+        y:{ min:yMin, max:yMax, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{size:12}} }
+      }
+    }
+  });
+}
+
+function initCharts() {
+  chartTempHum = mkChart('chart-temp-hum', [
+    {label:'Suhu (°C)', data:[], borderColor:'#ff6b6b', backgroundColor:'rgba(255,107,107,0.08)', tension:0.4, fill:true, pointRadius:2},
+    {label:'Kelembapan (%)', data:[], borderColor:'#4facfe', backgroundColor:'rgba(79,172,254,0.08)', tension:0.4, fill:true, pointRadius:2}
+  ], 0, 100);
+
+  chartSpo2Hr = mkChart('chart-spo2-hr', [
+    {label:'SpO2 (%)', data:[], borderColor:'#f72585', backgroundColor:'rgba(247,37,133,0.08)', tension:0.4, fill:true, pointRadius:2},
+    {label:'HR (bpm)', data:[], borderColor:'#b5179e', backgroundColor:'rgba(181,23,158,0.05)', tension:0.4, fill:false, pointRadius:2}
+  ], 0, null);
+
+  chartGsr = mkChart('chart-gsr', [
+    {label:'GSR', data:[], borderColor:'#56cfb0', backgroundColor:'rgba(86,207,176,0.1)', tension:0.4, fill:true, pointRadius:2}
+  ], 0, null);
+}
+
+function initCharts2(history) {
+  const labels = history.map(r=>r.timestamp.slice(11,19)).reverse();
+  const temps  = history.map(r=>r.temp).reverse();
+  const hums   = history.map(r=>r.hum).reverse();
+  const spo2s  = history.map(r=>r.spo2).reverse();
+  const hrs    = history.map(r=>r.hr).reverse();
+  const gsrs   = history.map(r=>r.gsr).reverse();
+
+  if(chart2Temp) chart2Temp.destroy();
+  if(chart2Hum) chart2Hum.destroy();
+  if(chart2Spo2) chart2Spo2.destroy();
+  if(chart2Hr) chart2Hr.destroy();
+  if(chart2Gsr) chart2Gsr.destroy();
+
+  function mk2(id, label, data, color, min, max, thresholdVal) {
+    const ctx = document.getElementById(id).getContext('2d');
+    const datasets = [{label, data, borderColor:color, backgroundColor:color+'18', tension:0.4, fill:true, pointRadius:1}];
+    if(thresholdVal !== undefined) {
+      datasets.push({label:'Threshold', data:Array(data.length).fill(thresholdVal),
+        borderColor:'rgba(255,77,109,0.6)', borderDash:[5,5], pointRadius:0,
+        fill:false, borderWidth:1.5});
+    }
+    return new Chart(ctx, {
+      type:'line',
+      data:{labels, datasets},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:thresholdVal!==undefined, labels:{color:'#7a90ab',boxWidth:10,font:{size:11}}}},
+        scales:{
+          x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{maxTicksLimit:10,maxRotation:0,font:{size:11}}},
+          y:{min, max, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{size:12},padding:10}}
+        }
+      }
+    });
+  }
+  chart2Temp = mk2('chart2-temp','Suhu (°C)',temps,'#ff6b6b',0,100);
+  chart2Hum  = mk2('chart2-hum','Kelembapan (%)',hums,'#4facfe',0,100);
+  chart2Spo2 = mk2('chart2-spo2','SpO2 (%)',spo2s,'#f72585',0,110,threshold);
+  chart2Hr   = mk2('chart2-hr','HR (bpm)',hrs,'#b5179e',0,250);
+  chart2Gsr  = mk2('chart2-gsr','GSR',gsrs,'#56cfb0',null,null);
+}
+
+function pushLive(data) {
+  const t = data.timestamp ? data.timestamp.slice(11,19) : '--';
+  if(liveLabels.length >= MAX_LIVE) {
+    liveLabels.shift(); liveTemp.shift(); liveHum.shift();
+    liveSpo2.shift(); liveHr.shift(); liveGsr.shift();
+  }
+  liveLabels.push(t); liveTemp.push(data.temp); liveHum.push(data.hum);
+  liveSpo2.push(data.spo2); liveHr.push(data.hr); liveGsr.push(data.gsr);
+
+  if(chartTempHum) {
+    chartTempHum.data.labels = [...liveLabels];
+    chartTempHum.data.datasets[0].data = [...liveTemp];
+    chartTempHum.data.datasets[1].data = [...liveHum];
+    chartTempHum.update('none');
+  }
+  if(chartSpo2Hr) {
+    chartSpo2Hr.data.labels = [...liveLabels];
+    chartSpo2Hr.data.datasets[0].data = [...liveSpo2];
+    chartSpo2Hr.data.datasets[1].data = [...liveHr];
+    chartSpo2Hr.update('none');
+  }
+  if(chartGsr) {
+    chartGsr.data.labels = [...liveLabels];
+    chartGsr.data.datasets[0].data = [...liveGsr];
+    chartGsr.update('none');
+  }
+}
+
+// ── STATUS HELPERS ──
+function setStatus(status) {
+  const pill = document.getElementById('status-pill');
+  const txt  = document.getElementById('status-text');
+  if(status === 'Online') {
+    pill.className = 'status-pill online';
+    txt.textContent = 'Online';
+  } else {
+    pill.className = 'status-pill offline';
+    txt.textContent = status;
+  }
+}
+
+function getBadge(val, low, high) {
+  if(val <= low || val >= high) return 'danger';
+  return 'normal';
+}
+function setCardBadge(id, text, cls) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'card-badge ' + cls;
+}
+
+// ── FETCH LATEST ──
+async function fetchLatest() {
+  try {
+    const res = await fetch('/api/latest');
+    const d = await res.json();
+
+    setStatus(d.status || 'Online');
+    document.getElementById('last-update').textContent = d.timestamp ? d.timestamp.slice(11) : '--';
+
+    document.getElementById('val-temp').innerHTML = `${d.temp ?? '--'}<span class="card-unit">°C</span>`;
+    document.getElementById('val-hum').innerHTML  = `${d.hum ?? '--'}<span class="card-unit">%</span>`;
+    document.getElementById('val-spo2').innerHTML = `${d.spo2 ?? '--'}<span class="card-unit">%</span>`;
+    document.getElementById('val-hr').innerHTML   = `${d.hr ?? '--'}<span class="card-unit">bpm</span>`;
+    document.getElementById('val-gsr').textContent = d.gsr ?? '--';
+
+    document.getElementById('mini-temp').textContent = `${d.temp} °C`;
+    document.getElementById('mini-hum').textContent  = `${d.hum} %`;
+    document.getElementById('mini-spo2').textContent = `Batas: ${threshold} %`;
+    document.getElementById('mini-hr').textContent   = `${d.hr} bpm`;
+    document.getElementById('mini-gsr').textContent  = `${d.gsr} units`;
+
+    // SpO2 alert
+    const alertBanner = document.getElementById('alert-banner');
+    if(d.spo2 < threshold) {
+      document.getElementById('card-spo2').classList.add('alert-high');
+      setCardBadge('badge-spo2','⚠ RENDAH','danger');
+      alertBanner.classList.remove('hidden');
+      document.getElementById('alert-text').textContent =
+        `SpO2 (${d.spo2}%) di bawah ambang batas (${threshold}%)! Peringatan dikirim ke Telegram.`;
+    } else {
+      document.getElementById('card-spo2').classList.remove('alert-high');
+      setCardBadge('badge-spo2','Normal','normal');
+      alertBanner.classList.add('hidden');
+    }
+
+    // HR badge
+    if(d.hr < 60) setCardBadge('badge-hr','Rendah','warning');
+    else if(d.hr > 100) setCardBadge('badge-hr','Tinggi','warning');
+    else setCardBadge('badge-hr','Normal','normal');
+
+    // Temp badge
+    if(d.temp > 37.5) setCardBadge('badge-temp','Demam','danger');
+    else if(d.temp > 36.5) setCardBadge('badge-temp','Normal','normal');
+    else setCardBadge('badge-temp','Dingin','warning');
+
+    pushLive(d);
+  } catch(e) {
+    setStatus('Offline');
+  }
+}
+
+// ── FETCH HISTORY ──
+async function fetchHistory() {
+  try {
+    const res = await fetch('/api/history');
+    const rows = await res.json();
+    renderTable(rows.slice(0,50));
+    initCharts2(rows);
+  } catch(e) {}
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('table-body');
+  if(!rows || rows.length===0) {
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;">Belum ada data</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map((r,i)=>{
+    const isLow = r.spo2 < threshold;
+    return `<tr>
+      <td style="color:var(--muted);">${i+1}</td>
+      <td>${r.timestamp}</td>
+      <td>${r.temp}</td>
+      <td>${r.hum}</td>
+      <td class="${isLow?'td-spo2-alert':''}">${r.spo2}${isLow?' ⚠':''}</td>
+      <td>${r.hr}</td>
+      <td>${r.gsr}</td>
+      <td><span style="color:${isLow?'var(--danger)':'var(--accent2)'};font-size:0.7rem;font-weight:700;">${isLow?'RENDAH':'Normal'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── THRESHOLD ──
+async function loadThreshold() {
+  const res = await fetch('/api/threshold');
+  const d = await res.json();
+  threshold = d.threshold;
+  document.getElementById('current-threshold-display').textContent = threshold;
+  document.getElementById('input-threshold').value = threshold;
+}
+
+async function saveThreshold() {
+  const val = parseFloat(document.getElementById('input-threshold').value);
+  if(isNaN(val)||val<0||val>100) { showToast('❌ Nilai tidak valid (0-100)','error'); return; }
+  const res = await fetch('/api/threshold', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({threshold:val})
+  });
+  const d = await res.json();
+  if(d.success) {
+    threshold = val;
+    document.getElementById('current-threshold-display').textContent = val;
+    showToast(`✅ Ambang batas SpO2 diperbarui: ${val}%`);
+  } else {
+    showToast('❌ Gagal menyimpan','error');
+  }
+}
+
+// ── TOAST ──
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type==='error' ? 'rgba(255,77,109,0.15)' : 'rgba(0,255,157,0.12)';
+  t.style.borderColor = type==='error' ? 'rgba(255,77,109,0.3)' : 'rgba(0,255,157,0.3)';
+  t.style.color = type==='error' ? 'var(--danger)' : 'var(--accent2)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── SECTION SWITCH ──
+function showSection(name, navEl) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  if(navEl) navEl.classList.add('active');
+
+  const titles = {
+    dashboard:'Dashboard <span>Real-time Monitoring</span>',
+    grafik:'Grafik <span>100 Data Terakhir</span>',
+    riwayat:'Riwayat Data <span>Log Sensor</span>',
+    pengaturan:'Pengaturan <span>Konfigurasi Sistem</span>'
+  };
+  document.getElementById('page-title').innerHTML = titles[name];
+
+  if(name==='riwayat'||name==='grafik') fetchHistory();
+}
+
+// ── INIT ──
+window.onload = async function() {
+  initCharts();
+  await loadThreshold();
+  await fetchLatest();
+  // Poll every 3s
+  setInterval(fetchLatest, 3000);
+  setInterval(()=>{ if(document.getElementById('sec-riwayat').classList.contains('active')
+    || document.getElementById('sec-grafik').classList.contains('active')) fetchHistory(); }, 15000);
+};
+</script>
+</body>
+</html>

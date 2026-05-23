@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BNSP IoT — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c14;
+    --panel: #0d1421;
+    --border: #1a2540;
+    --accent: #00d4ff;
+    --accent2: #00ff9d;
+    --danger: #ff4d6d;
+    --text: #e2e8f0;
+    --muted: #4a5568;
+    --glow: 0 0 30px rgba(0,212,255,0.15);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes gridMove {
+    from { transform: translate(0,0); }
+    to   { transform: translate(50px, 50px); }
+  }
+
+  /* Glowing orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    animation: orbFloat 8s ease-in-out infinite;
+  }
+  .orb1 {
+    width: 400px; height: 400px;
+    background: rgba(0,212,255,0.08);
+    top: -100px; left: -100px;
+    animation-delay: 0s;
+  }
+  .orb2 {
+    width: 300px; height: 300px;
+    background: rgba(0,255,157,0.06);
+    bottom: -80px; right: -80px;
+    animation-delay: 4s;
+  }
+  @keyframes orbFloat {
+    0%,100% { transform: translate(0,0); }
+    50%      { transform: translate(30px,-30px); }
+  }
+
+  .login-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    padding: 1rem;
+    animation: fadeUp 0.7s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(30px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .login-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    box-shadow: var(--glow), 0 40px 80px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    animation: scanLine 3s ease-in-out infinite;
+  }
+  @keyframes scanLine {
+    0%,100% { opacity:0.5; }
+    50%      { opacity:1; }
+  }
+
+  .logo-area {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .logo-icon {
+    width: 72px; height: 72px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,255,157,0.1));
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    position: relative;
+    box-shadow: 0 0 20px rgba(0,212,255,0.2);
+    animation: iconPulse 2s ease-in-out infinite;
+  }
+  @keyframes iconPulse {
+    0%,100% { box-shadow: 0 0 20px rgba(0,212,255,0.2); }
+    50%      { box-shadow: 0 0 35px rgba(0,212,255,0.4); }
+  }
+
+  .logo-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+
+  label {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem 0.85rem 2.8rem;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    outline: none;
+  }
+  input:focus {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.04);
+    box-shadow: 0 0 0 3px rgba(0,212,255,0.08);
+  }
+  input::placeholder { color: var(--muted); }
+
+  .error-msg {
+    background: rgba(255,77,109,0.1);
+    border: 1px solid rgba(255,77,109,0.3);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--danger);
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    animation: shake 0.4s ease;
+  }
+  @keyframes shake {
+    0%,100% { transform:translateX(0); }
+    25%      { transform:translateX(-6px); }
+    75%      { transform:translateX(6px); }
+  }
+
+  .btn-login {
+    width: 100%;
+    padding: 0.9rem;
+    background: linear-gradient(135deg, var(--accent), #0099cc);
+    border: none;
+    border-radius: 10px;
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-login::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(rgba(255,255,255,0.15), transparent);
+    pointer-events: none;
+  }
+  .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,212,255,0.4);
+  }
+  .btn-login:active { transform: translateY(0); }
+
+  .footer-note {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--accent2);
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%,100% { opacity:1; }
+    50%      { opacity:0.3; }
+  }
+</style>
+</head>
+<body>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="logo-area">
+        <div class="logo-icon">🩺</div>
+        <div class="logo-title">BNSP IoT</div>
+        <div class="logo-sub">Health Monitoring System</div>
+      </div>
+
+      {% if error %}
+      <div class="error-msg">⚠️ {{ error }}</div>
+      {% endif %}
+
+      <form method="POST">
+        <div class="form-group">
+          <label>Username</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" name="username" placeholder="Masukkan username" autocomplete="off" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" name="password" placeholder="Masukkan password" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login">MASUK →</button>
+      </form>
+
+      <div class="footer-note">
+        <span class="status-dot"></span>
+        BNSP Monitoring v1.0 · Secure Access
+      </div>
+    </div>
+  </div>
+</body>
+</html>
