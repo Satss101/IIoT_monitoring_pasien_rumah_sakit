@@ -15,6 +15,10 @@ bnsp_iot/
 └── templates/
     ├── login.html      ← Halaman login
     └── dashboard.html  ← Dashboard utama
+└── firmware/
+    ├── firmware.ino    ← Main progrma
+    └── ota_web.cpp     ← program c OTA web server
+    └── ota_web.h       ← header OTA web server
 ```
 
 ---
@@ -25,14 +29,11 @@ Sebelum menjalankan, sesuaikan variabel berikut di bagian `CONFIGURATION` pada `
 
 ```python
 # ── Modbus ──
-MODBUS_HOST     = "192.168.254.50"   # IP perangkat Modbus
+MODBUS_HOST     = "192.168.18.254"   # IP perangkat Modbus
 MODBUS_PORT     = 502
 MODBUS_UNIT_ID  = 1
 MODBUS_ADDRESS  = 1                  # Starting address
 MODBUS_QUANTITY = 5                  # Jumlah register
-
-# ── Database ──
-DB_PASSWORD = ""    # ← Isi password MySQL Anda
 
 # ── Telegram ──
 TELEGRAM_TOKEN   = "YOUR_BOT_TOKEN_HERE"   # ← Token dari @BotFather
