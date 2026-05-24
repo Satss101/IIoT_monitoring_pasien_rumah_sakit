@@ -2,6 +2,8 @@
 
 Sistem monitoring kesehatan real-time berbasis IoT dengan Modbus TCP, MySQL, Telegram Bot, dan Web Dashboard.
 
+![BNSP IoT Visualization](./VISUALISATION.png)
+
 ---
 
 ## 📁 Struktur Proyek
